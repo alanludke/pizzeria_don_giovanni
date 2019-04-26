@@ -2,10 +2,31 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <pthread.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
+#include <semaphore.h>
 #include "pizzeria.h"
 #include "helper.h"
+
+sem_t sem_;
+
+void *thread_pizzaiolo(void *args) {
+    for (int i = 0; i < *(int*)args; i++) {
+        sem_wait(&sem_a);
+        fprintf(out, "A");
+        qtdA++;
+        fflush(stdout);
+        sem_post(&sem_a);
+        sem_wait(&sem_b);
+        sem_post(&sem_a);
+
+    // Importante para que vocês vejam o progresso do programa
+    // mesmo que o programa trave em um sem_wait().
+    }
+    return NULL;
+}
 
 
 int main(int argc, char** argv) {
@@ -33,6 +54,16 @@ int main(int argc, char** argv) {
     //declarando as threads
     pthread_t pizzaiolos[n_pizzaiolos];
     pthread_t garcons[n_garcons];
+
+    //loop para criar as threads de pizzaiolos
+    for (int i = 0; i < n_pizzaiolos; i++) {
+        pthread_create(&pizzaiolos[i], NULL, thread_pizzaiolo, &segs_execucao);
+    }
+
+    //loop para criar as threads de garçons
+    for (int i = 0; i < n_garcons; i++) {
+        pthread_create(&garcons[i], NULL, thread_garcom, , &segs_execucao);
+    }
 
     pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
     pizzeria_open();

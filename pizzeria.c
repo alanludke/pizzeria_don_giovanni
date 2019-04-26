@@ -16,13 +16,6 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	
 
 
-	//loop para criar as threads de pizzaiolos
-	for (int i = 0; i < n_pizzaiolos; i++) {
-
-	    pthread_create(&pizzaiolos[i], NULL, sumVectors, NULL);
-
-	}
-
 }
 
 /*
