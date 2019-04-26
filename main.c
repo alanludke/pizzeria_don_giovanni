@@ -28,7 +28,12 @@ int main(int argc, char** argv) {
         segs_execucao = atoi(argv[7]);
 
    
-    helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
+    helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos); // está contido em helper.c(não mexeremos)
+
+    //declarando as threads
+    pthread_t pizzaiolos[n_pizzaiolos];
+    pthread_t garcons[n_garcons];
+
     pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
     pizzeria_open();
 
