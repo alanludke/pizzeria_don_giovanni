@@ -6,12 +6,58 @@
 #include <stdio.h>
 #include <math.h>
 
+
+void* pizzaiolo_thread(void* arg) {
+
+    pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos); // retira da queue e cria pedido a partir deste
+
+    pizza_t* pizza = pizzaiolo_montar_pizza(pedido); // monta a pizza
+
+
+    sem_wait(&sem_forno); // ocupa forno até pizza ser assada
+    pthread_mutex_lock(&mutex_pa); // utiliza a pá
+	pizzaiolo_colocar_pizza_forno(pizza);
+    pthread_mutex_unlock(&mutex_pa); // desocupa a pá
+
+    if(pizza_assada == ){
+	    pthread_mutex_lock(&mutex_pa);  // utiliza a pá
+		pizzaiolo_retirar_pizza_forno(pizza);
+		pthread_mutex_unlock(&mutex_pa); // desocupa a pá
+	    sem_post(&sem_forno); // desocupa forno
+    }
+
+
+    pthread_mutex_lock(&mutex_balcao);
+
+    garcom_chamar();
+
+    // Desalocando pedido
+    free(pedido);
+    // Post para ter cozinheiro livre
+    sem_post(&sem_pizzaiolos);
+    
+    pthread_exit(0);
+}
+
+
 /*
 Inicializa quaisquer recursos e estruturas de dados que sejam necessários antes da pizzeria poder receber clientes.
 Chamada pela função main() antes de qualquer outra função.
 */
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos) {
+	
+	queue_init(queue_pedidos, tam_deck);
+	sem_init(&sem_forno, 0, tam_forno);
+	sem_init(&sem_pizzaiolos, 0, n_pizzaiolos);
+	sem_init(&sem_mesas, 0, n_mesas);
+	sem_init(&sem_garcons, 0, n_garcons);
+	sem_init(&sem_tam_deck, 0, tam_deck);
+
+	pthread_mutex_init(&mutex_pa, NULL);
+	pthread_mutex_init(&mutex_pegador, NULL);
+
+	thr_grupos = (pthread_t*) malloc(sizeof(pthread_t) * n_grupos);
 
 }
 
@@ -39,7 +85,7 @@ Chamada pelo nariz do pizzaiolo.
 A thread que chamará essa função será uma thread específica para esse fim, criada nas profundezas do helper.c.
 */
 void pizza_assada(pizza_t* pizza) {
-
+	
 }
 
 /*
@@ -67,7 +113,8 @@ Chama um garçom, bloqueia até o garçom chegar.
 Chamada pelo cliente líder.*
 */
 void garcom_chamar() {
-
+	sem_wait(&sem_garcons);
+	pthread_mutex_unlock(&mutex_balcao);
 }
 
 /*
@@ -75,9 +122,8 @@ Faz um pedido de pizza. O pedido aparece como uma smart ficha no smart deck. É 
 Chamado pelo cliente líder.
 */
 void fazer_pedido(pedido_t* pedido) {
-
+	queue_push_back(queue_pedidos, pedido);
 }
-
 /*
 Pega uma fatia da pizza. Retorna 0 (sem erro) se conseguiu pegar a fatia, ou -1 (erro) se a pizza já acabou.
 Chamada pelas threads representando clientes.
