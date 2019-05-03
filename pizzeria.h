@@ -4,19 +4,6 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-// Semaforos
-sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck;
-
-// Mutexes
-pthread_mutex_t mutex_balcao, mutex_pa, mutex_pegador;
-
-
-queue_t* queue_pedidos;
-
-
-pthread_mutex_init(&mutex_pa, NULL);
-pthread_mutex_init(&mutex_pegador, NULL);
-
 
 
 // Vetor de pizzas a serem entregues
@@ -38,7 +25,7 @@ typedef struct pizza_s {
     int fatias;         ///< IMPORTANTE! NÃO REMOVER
     pedido_t* pedido;   ///< IMPORTANTE! NÃO REMOVER
     struct timespec ts; ///< IMPORTANTE! NÃO REMOVER
-
+    pthread_mutex_t mtx_pegador;
     /* você pode adicionar coisas aqui */
 } pizza_t;
 

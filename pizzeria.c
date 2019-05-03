@@ -6,6 +6,15 @@
 #include <stdio.h>
 #include <math.h>
 
+// Semaforos
+sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck;
+
+// Mutexes
+pthread_mutex_t mutex_balcao, mutex_pa;
+
+
+queue_t queue_pedidos;
+
 
 void* pizzaiolo_thread(void* arg) {
 
@@ -16,15 +25,13 @@ void* pizzaiolo_thread(void* arg) {
 
     sem_wait(&sem_forno); // ocupa forno até pizza ser assada
     pthread_mutex_lock(&mutex_pa); // utiliza a pá
-	pizzaiolo_colocar_pizza_forno(pizza);
+	  pizzaiolo_colocar_pizza_forno(pizza);
     pthread_mutex_unlock(&mutex_pa); // desocupa a pá
 
-    if(pizza_assada == ){
-	    pthread_mutex_lock(&mutex_pa);  // utiliza a pá
+    pthread_mutex_lock(&mutex_pa);  // utiliza a pá
 		pizzaiolo_retirar_pizza_forno(pizza);
 		pthread_mutex_unlock(&mutex_pa); // desocupa a pá
-	    sem_post(&sem_forno); // desocupa forno
-    }
+    sem_post(&sem_forno); // desocupa forno
 
 
     pthread_mutex_lock(&mutex_balcao);
@@ -35,8 +42,8 @@ void* pizzaiolo_thread(void* arg) {
     free(pedido);
     // Post para ter cozinheiro livre
     sem_post(&sem_pizzaiolos);
-    
-    pthread_exit(0);
+
+    pthread_exit(NULL);
 }
 
 
@@ -46,8 +53,8 @@ Chamada pela função main() antes de qualquer outra função.
 */
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos) {
-	
-	queue_init(queue_pedidos, tam_deck);
+
+	queue_init(&queue_pedidos, tam_deck);
 	sem_init(&sem_forno, 0, tam_forno);
 	sem_init(&sem_pizzaiolos, 0, n_pizzaiolos);
 	sem_init(&sem_mesas, 0, n_mesas);
@@ -85,7 +92,7 @@ Chamada pelo nariz do pizzaiolo.
 A thread que chamará essa função será uma thread específica para esse fim, criada nas profundezas do helper.c.
 */
 void pizza_assada(pizza_t* pizza) {
-	
+
 }
 
 /*
