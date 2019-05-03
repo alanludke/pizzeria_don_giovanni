@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <pthread.h>
 
 /*
 Inicializa quaisquer recursos e estruturas de dados que sejam necessários antes da pizzeria poder receber clientes.
@@ -13,8 +12,6 @@ Chamada pela função main() antes de qualquer outra função.
 */
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos) {
-	
-
 
 }
 

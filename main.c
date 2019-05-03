@@ -13,19 +13,7 @@
 sem_t sem_;
 
 void *thread_pizzaiolo(void *args) {
-    for (int i = 0; i < *(int*)args; i++) {
-        sem_wait(&sem_a);
-        fprintf(out, "A");
-        qtdA++;
-        fflush(stdout);
-        sem_post(&sem_a);
-        sem_wait(&sem_b);
-        sem_post(&sem_a);
 
-    // Importante para que vocês vejam o progresso do programa
-    // mesmo que o programa trave em um sem_wait().
-    }
-    return NULL;
 }
 
 
@@ -51,6 +39,7 @@ int main(int argc, char** argv) {
    
     helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos); // está contido em helper.c(não mexeremos)
 
+/*
     //declarando as threads
     pthread_t pizzaiolos[n_pizzaiolos];
     pthread_t garcons[n_garcons];
@@ -78,6 +67,6 @@ int main(int argc, char** argv) {
     helper_destroy();
 
     //TODO: report de pizzas queimadas, clientes atendidos, etc.
-
+*/
     return 0;
 }

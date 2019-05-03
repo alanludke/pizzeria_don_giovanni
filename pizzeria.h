@@ -4,6 +4,28 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+
+// Semáforos
+sem_t sem_pizzaiolos;
+sem_t sem_garcons;
+sem_t s_balcao_cozinheiros;
+
+// Mutexes para indices
+pthread_mutex_t mut_entrega_pizzaiolo;
+pthread_mutex_t mut_coleta_garcom;
+
+// Indices dos cozinheiros a colocar pratos
+// e garcons a pegar
+int index_cozinheiro, index_garcon;
+
+// buffer de pizzas a serem entregues
+prato_t** pratos_prontos;
+
+// Threads pizzaiolos
+pthread_t* threads_pizzaiolos;
+
+int* buffer_pedidos;
+
 typedef struct cliente_s cliente_t;
 
 typedef struct pedido_s {
