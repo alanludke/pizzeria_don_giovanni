@@ -48,7 +48,7 @@ void* queue_wait(queue_t* q) {
     void* front = q->buf[q->begin];
 //    printf("buf[%d] -> %p  (%ld)\n", q->end, front, pthread_self());
     q->begin = (q->begin + 1) % q->capacity;
-    --q->size;    
+    --q->size;
     sem_post(&q->empty);
     pthread_mutex_unlock(&q->mtx);
 

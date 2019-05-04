@@ -10,10 +10,10 @@
 sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck;
 
 // Mutexes
-pthread_mutex_t mutex_balcao, mutex_pa;
+pthread_mutex_t mutex_pa;
 
 
-queue_t queue_pedidos;
+queue_t queue_pedidos, queue_balcao;
 
 
 void* pizzaiolo_thread(void* arg) {
@@ -25,18 +25,17 @@ void* pizzaiolo_thread(void* arg) {
 
     sem_wait(&sem_forno); // ocupa forno até pizza ser assada
     pthread_mutex_lock(&mutex_pa); // utiliza a pá
-	  pizzaiolo_colocar_pizza_forno(pizza);
+	  pizzaiolo_colocar_forno(pizza);
     pthread_mutex_unlock(&mutex_pa); // desocupa a pá
 
     pthread_mutex_lock(&mutex_pa);  // utiliza a pá
-		pizzaiolo_retirar_pizza_forno(pizza);
+		pizzaiolo_retirar_forno(pizza);
 		pthread_mutex_unlock(&mutex_pa); // desocupa a pá
     sem_post(&sem_forno); // desocupa forno
 
+    while (queue_balcao.queue_empty());
 
-    pthread_mutex_lock(&mutex_balcao);
-
-    garcom_chamar();
+    queue_balcao.queue_push_back(queue_balcao, pizza);
 
     // Desalocando pedido
     free(pedido);
@@ -55,6 +54,7 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos) {
 
 	queue_init(&queue_pedidos, tam_deck);
+  queue_init(&queue_balcao, 1);
 	sem_init(&sem_forno, 0, tam_forno);
 	sem_init(&sem_pizzaiolos, 0, n_pizzaiolos);
 	sem_init(&sem_mesas, 0, n_mesas);
@@ -64,8 +64,7 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	pthread_mutex_init(&mutex_pa, NULL);
 	pthread_mutex_init(&mutex_pegador, NULL);
 
-	thr_grupos = (pthread_t*) malloc(sizeof(pthread_t) * n_grupos);
-
+	//thr_grupos = (pthread_t*) malloc(sizeof(pthread_t) * n_grupos);
 }
 
 /*
@@ -121,7 +120,6 @@ Chamada pelo cliente líder.*
 */
 void garcom_chamar() {
 	sem_wait(&sem_garcons);
-	pthread_mutex_unlock(&mutex_balcao);
 }
 
 /*

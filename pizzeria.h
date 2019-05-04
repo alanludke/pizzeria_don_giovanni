@@ -5,11 +5,6 @@
 #include <pthread.h>
 
 
-
-// Vetor de pizzas a serem entregues
-pizza_t** pizzas_prontas;
-
-
 typedef struct cliente_s cliente_t;
 
 typedef struct pedido_s {
