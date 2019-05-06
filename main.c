@@ -30,36 +30,37 @@ int main(int argc, char** argv) {
     if (argc > 7)
         segs_execucao = atoi(argv[7]);
 
-
     helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos); // está contido em helper.c(não mexeremos)
     pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
     pizzeria_open();
 
     //declarando as threads
-    pthread_t thr_pizzaiolos[n_pizzaiolos], thr_grupos[n_grupos];
+    pthread_t threads_pizzaiolos[n_pizzaiolos];
 
     //loop para criar as threads de pizzaiolos
     for (int i = 0; i < n_pizzaiolos; i++) {
-        pthread_create(&pizzaiolos[i], NULL, thread_pizzaiolo, &segs_execucao);
+        pthread_create(&threads_pizzaiolos[i], NULL, thread_pizzaiolo, NULL);
     }
-
-    //loop para criar as threads de garçons
-    for (int i = 0; i < n_garcons; i++) {
-        pthread_create(&garcons[i], NULL, thread_garcom, , &segs_execucao);
-    }
-
-
 
     printf("Executando simulação por %d segundos\n", segs_execucao);
     sleep(segs_execucao);
     printf("Passados %d segundos, fechando pizzaria\n", segs_execucao);
 
 
+    //loop para as threads de pizzaiolos
+    for (int i = 0; i < n_pizzaiolos; i++) {
+        pthread_join(threads_pizzaiolos[i], NULL);
+    }
+
     pizzeria_close();
     pizzeria_destroy();
     helper_destroy();
 
+    
     //TODO: report de pizzas queimadas, clientes atendidos, etc.
+
+    printf("Passados %d segundos, fechando pizzaria\n\n", segs_execucao);
+    //printf("Relatório do dia:\nNúmero de pizzas queimadas: %d/%d\nClientes atendidos: %d\nassdadssdasdasda: %d\n", g_hlp_pizzas_queimadas, g_n_pizzas, -999, -999);
 
     return 0;
 }

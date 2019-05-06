@@ -53,8 +53,12 @@ build/program: $(OBJS)
 
 # Prepara .tar.gz pra submissão no moodle
 # Note que antes de preparar o tar.gz, é feito um clean
-submission:
-	@bash ./.submission-packer.sh
+submission: clean
+	SUBNAME=$$(basename "$$(pwd)"); \
+		cd ..; \
+		rm -fr "$$SUBNAME.tar.gz"; \
+		tar zcf "$$SUBNAME.tar.gz" "$$SUBNAME"
+	@echo Trabalho empacotado em $$(cd .. && pwd)/$$(basename "$$(pwd)").tar.gz
 
 # Limpa binários
 clean:

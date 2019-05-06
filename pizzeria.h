@@ -21,7 +21,10 @@ typedef struct pizza_s {
     pedido_t* pedido;   ///< IMPORTANTE! NÃO REMOVER
     struct timespec ts; ///< IMPORTANTE! NÃO REMOVER
     pthread_mutex_t mtx_pegador;
+    int assada;
+
     /* você pode adicionar coisas aqui */
+
 } pizza_t;
 
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,

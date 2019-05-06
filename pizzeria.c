@@ -12,35 +12,51 @@ sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck;
 // Mutexes
 pthread_mutex_t mutex_pa;
 
-
 queue_t queue_pedidos, queue_balcao;
 
+void *thread_pizzaiolo(void* arg) {
+	// retira da queue e cria pedido a partir deste
+	pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos); 
 
-void* pizzaiolo_thread(void* arg) {
+	pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
 
-    pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos); // retira da queue e cria pedido a partir deste
+	pizza->assada = 0;
+	// ocupa forno até pizza ser assada
+	sem_wait(&sem_forno);
+	// utiliza a pá
+	pthread_mutex_lock(&mutex_pa);
+	pizzaiolo_colocar_forno(pizza);
 
-    pizza_t* pizza = pizzaiolo_montar_pizza(pedido); // monta a pizza
+	// desocupa a pá
+	pthread_mutex_unlock(&mutex_pa);
 
+	// espera enquanto pizza não está assada
+	while(!pizza->assada);
+	// utiliza a pá
+	pthread_mutex_lock(&mutex_pa);
 
-    sem_wait(&sem_forno); // ocupa forno até pizza ser assada
-    pthread_mutex_lock(&mutex_pa); // utiliza a pá
-	  pizzaiolo_colocar_forno(pizza);
-    pthread_mutex_unlock(&mutex_pa); // desocupa a pá
+	pizzaiolo_retirar_forno(pizza);
 
-    pthread_mutex_lock(&mutex_pa);  // utiliza a pá
-		pizzaiolo_retirar_forno(pizza);
-		pthread_mutex_unlock(&mutex_pa); // desocupa a pá
-    sem_post(&sem_forno); // desocupa forno
+	// desocupa a pá
+	pthread_mutex_unlock(&mutex_pa);
 
-    while (queue_balcao.queue_empty());
+	// desocupa forno
+	sem_post(&sem_forno);
 
-    queue_balcao.queue_push_back(queue_balcao, pizza);
+	// espera enquanto não há local vazio no balcao
+	while (queue_empty(&queue_balcao));
 
-    // Desalocando pedido
-    free(pedido);
-    // Post para ter cozinheiro livre
-    sem_post(&sem_pizzaiolos);
+	//seta mtx_pegador para destravado
+	pthread_mutex_init(&pizza->mtx_pegador, NULL);
+
+	// se possível coloca a pizza e pegador no balcao
+	queue_push_back(&queue_balcao, pizza);
+
+	// Desalocando pedido
+	free(pedido);
+
+	// Post para ter cozinheiro livre
+	sem_post(&sem_pizzaiolos);
 
     pthread_exit(NULL);
 }
@@ -54,7 +70,7 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos) {
 
 	queue_init(&queue_pedidos, tam_deck);
-  queue_init(&queue_balcao, 1);
+  	queue_init(&queue_balcao, 1);
 	sem_init(&sem_forno, 0, tam_forno);
 	sem_init(&sem_pizzaiolos, 0, n_pizzaiolos);
 	sem_init(&sem_mesas, 0, n_mesas);
@@ -62,9 +78,6 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	sem_init(&sem_tam_deck, 0, tam_deck);
 
 	pthread_mutex_init(&mutex_pa, NULL);
-	pthread_mutex_init(&mutex_pegador, NULL);
-
-	//thr_grupos = (pthread_t*) malloc(sizeof(pthread_t) * n_grupos);
 }
 
 /*
@@ -91,7 +104,7 @@ Chamada pelo nariz do pizzaiolo.
 A thread que chamará essa função será uma thread específica para esse fim, criada nas profundezas do helper.c.
 */
 void pizza_assada(pizza_t* pizza) {
-
+	pizza->assada = 1;
 }
 
 /*
@@ -120,6 +133,9 @@ Chamada pelo cliente líder.*
 */
 void garcom_chamar() {
 	sem_wait(&sem_garcons);
+
+	//todo
+	sem_post(&sem_garcons);
 }
 
 /*
@@ -127,7 +143,7 @@ Faz um pedido de pizza. O pedido aparece como uma smart ficha no smart deck. É 
 Chamado pelo cliente líder.
 */
 void fazer_pedido(pedido_t* pedido) {
-	queue_push_back(queue_pedidos, pedido);
+	queue_push_back(&queue_pedidos, pedido);
 }
 /*
 Pega uma fatia da pizza. Retorna 0 (sem erro) se conseguiu pegar a fatia, ou -1 (erro) se a pizza já acabou.
