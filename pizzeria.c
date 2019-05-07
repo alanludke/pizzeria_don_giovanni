@@ -16,7 +16,7 @@ queue_t queue_pedidos, queue_balcao;
 
 void *thread_pizzaiolo(void* arg) {
 	// retira da queue e cria pedido a partir deste
-	pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos); 
+	pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
 
 	pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
 
@@ -43,8 +43,9 @@ void *thread_pizzaiolo(void* arg) {
 	// desocupa forno
 	sem_post(&sem_forno);
 
-	// espera enquanto não há local vazio no balcao
-	while (queue_empty(&queue_balcao));
+	// espera enquanto não há local vazio no balcao ***pode nao precisar pois ja se espera
+	//o balcao ser desocupado atraves de um semaforo dentro da funcao queue_push_back
+	//while (!queue_empty(&queue_balcao));	***
 
 	//seta mtx_pegador para destravado
 	pthread_mutex_init(&pizza->mtx_pegador, NULL);
@@ -58,7 +59,7 @@ void *thread_pizzaiolo(void* arg) {
 	// Post para ter cozinheiro livre
 	sem_post(&sem_pizzaiolos);
 
-    pthread_exit(NULL);
+  pthread_exit(NULL);
 }
 
 
@@ -70,7 +71,7 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos) {
 
 	queue_init(&queue_pedidos, tam_deck);
-  	queue_init(&queue_balcao, 1);
+  queue_init(&queue_balcao, 1);
 	sem_init(&sem_forno, 0, tam_forno);
 	sem_init(&sem_pizzaiolos, 0, n_pizzaiolos);
 	sem_init(&sem_mesas, 0, n_mesas);

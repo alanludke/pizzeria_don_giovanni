@@ -27,6 +27,8 @@ typedef struct pizza_s {
 
 } pizza_t;
 
+void *thread_pizzaiolo(void* arg);
+
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
                    int n_garcons, int tam_deck, int n_grupos);
 
