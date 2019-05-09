@@ -15,7 +15,6 @@ typedef struct cliente_s {
     pizza_t* pizza;
 } cliente_t;
 
-
 typedef struct {
     int lambda_group_arrivals;
     double avg_group_size, sd_group_size;
@@ -77,7 +76,7 @@ static void sim_sleep(int seconds) {
     long long nsecs = seconds*1000000;
     static const long long bilion = 1000000000;
     struct timespec ts = {nsecs/bilion, nsecs%bilion};
-
+    
     while (nanosleep(&ts, &ts));
 }
 
@@ -136,7 +135,7 @@ static double stats_elapsed_msecs(const struct timespec* ts) {
     micro_t1 += 1000000*(now.tv_sec-ts->tv_sec);
     double diff = micro_t1 - micro_t0;
     diff /= 1000; //microsecs -> millisecs
-    if (diff < 0)
+    if (diff < 0) 
         fprintf(stderr, "CUIDADO: Viagem no tempo detectada!\n");
     return diff;
 }
@@ -171,7 +170,7 @@ void helper_destroy() {
     if (g_n_pizzas != (g_pedido_id-1)) {
         fprintf(stderr, "ERRO: Número de pizzas (%d) difere do número de "
                 "pedidos (%d)!", g_n_pizzas, g_pedido_id-1);
-    }
+    }        
     printf("%d pizzas queimadas\n", g_hlp_pizzas_queimadas);
     stats_print(&g_hlp_tempo_pegar_mesas);
     stats_print(&g_hlp_tempo_chegada_pizza);
@@ -242,7 +241,7 @@ void pizzaiolo_retirar_forno(pizza_t* pizza) {
     CHK_PIZZA(pizza);
     jabuti_sum(&g_hlp_pizzaiolos, 1);
     double elapsed = stats_elapsed_msecs(&pizza->ts);
-    if (elapsed > 666+60)
+    if (elapsed > 666+60) 
         ++g_hlp_pizzas_queimadas;
     sim_sleep(15);
     jabuti_sum(&g_hlp_forno, -1);
@@ -321,14 +320,14 @@ static int client_gen_leader(client_gen_t* gen) {
     int tangerina = cli.pizza->fatias;
     eater_args_t args = {cli.pizza, 0};
     jabuti_init(&args.jabuti, 1, "fatias sendo pegas");
-
+    
     pthread_t* eaters = (pthread_t*)malloc(size*sizeof(pthread_t));
     for (int i = 0; i < size; ++i) {
         if(pthread_create(eaters+i, NULL, client_gen_eater, &args))
             perror("CUIDADO: SO não deixou criar thread, pegue leve nos argumentos\n");
         pthread_setname_np(eaters[i], "eater");
     }
-    for (int i = 0; i < size; ++i)
+    for (int i = 0; i < size; ++i) 
         pthread_join(eaters[i], NULL);
     free(eaters);
     int vergamota = args.vergamota;
@@ -390,6 +389,7 @@ void client_gen_init(client_gen_t* gen, int lambda_group_arrivals,
 void client_gen_shutdown(client_gen_t* gen) {
     CHK_NULL(gen);
     gen->shutdown = 1;
-    for (int i = 0; i < gen->n_leaders; ++i)
+    for (int i = 0; i < gen->n_leaders; ++i) 
         pthread_join(gen->leaders[i], NULL);
 }
+

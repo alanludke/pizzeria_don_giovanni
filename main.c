@@ -10,8 +10,6 @@
 #include "pizzeria.h"
 #include "helper.h"
 
-int pizzeria_aberta = 0;
-
 int main(int argc, char** argv) {
     int tam_forno = 1, n_pizzaiolos = 1, n_mesas = 10, n_garcons = 1,
         tam_deck = 0, n_grupos = 0, segs_execucao = 10;
@@ -34,30 +32,14 @@ int main(int argc, char** argv) {
     helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos); // está contido em helper.c(não mexeremos)
     pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
     pizzeria_open();
-    pizzeria_aberta = 1;
-
-    //declarando as threads
-    pthread_t threads_pizzaiolos[n_pizzaiolos];
-
-    //loop para criar as threads de pizzaiolos
-    for (int i = 0; i < n_pizzaiolos; i++) {
-        pthread_create(&threads_pizzaiolos[i], NULL, thread_pizzaiolo, NULL);
-    }
 
     printf("Executando simulação por %d segundos\n", segs_execucao);
     sleep(segs_execucao);
     printf("Passados %d segundos, fechando pizzaria\n", segs_execucao);
 
-
-    //loop para as threads de pizzaiolos
-    for (int i = 0; i < n_pizzaiolos; i++) {
-        pthread_join(threads_pizzaiolos[i], NULL);
-    }
-
     pizzeria_close();
     pizzeria_destroy();
     helper_destroy();
-
 
     printf("Passados %d segundos, fechando pizzaria\n\n", segs_execucao);
 
