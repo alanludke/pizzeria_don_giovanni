@@ -10,11 +10,9 @@
 sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck;
 
 // Mutexes
-pthread_mutex_t mutex_pa;
+pthread_mutex_t mutex_pa, mutex_ocupamesa;
 
 queue_t queue_pedidos, queue_balcao;
-
-
 
 void *thread_pizzaiolo(void* arg) {
 	// retira da queue e cria pedido a partir deste
@@ -80,6 +78,8 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	sem_init(&sem_tam_deck, 0, tam_deck);
 
 	pthread_mutex_init(&mutex_pa, NULL);
+	pthread_mutex_init(&mutex_ocupamesa, NULL);
+
 }
 
 /*
@@ -106,6 +106,7 @@ void pizzeria_destroy() {
 	sem_destroy(&sem_tam_deck);
 
 	pthread_mutex_destroy(&mutex_pa);
+	pthread_mutex_destroy(&mutex_ocupamesa);
 }
 
 /*
@@ -132,7 +133,7 @@ int pegar_mesas(int tam_grupo) {
 		mesas_necessarias++;
 
 	int tamanhosem;
-
+	pthread_mutex_lock(&mutex_ocupamesa);
 	sem_getvalue(&sem_mesas, &tamanhosem);
 	if(mesas_necessarias >= tamanhosem)
 		return 0;
@@ -140,6 +141,7 @@ int pegar_mesas(int tam_grupo) {
 	for (size_t i = 0; i < mesas_necessarias; i++) {
 		sem_wait(&sem_mesas);
 	}
+	pthread_mutex_unlock(&mutex_ocupamesa);
 
 	return 0;
 }

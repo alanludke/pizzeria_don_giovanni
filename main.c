@@ -59,9 +59,8 @@ int main(int argc, char** argv) {
     helper_destroy();
 
 
-    //TODO: report de pizzas queimadas, clientes atendidos, etc.
-
     printf("Passados %d segundos, fechando pizzaria\n\n", segs_execucao);
+
     //printf("Relatório do dia:\nNúmero de pizzas queimadas: %d/%d\nClientes atendidos: %d\nassdadssdasdasda: %d\n", g_hlp_pizzas_queimadas, g_n_pizzas, -999, -999);
 
     return 0;
