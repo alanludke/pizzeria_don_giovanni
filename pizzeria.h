@@ -4,15 +4,14 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-
 typedef struct cliente_s cliente_t;
 
 typedef struct pedido_s {
     cliente_t* cliente; ///< IMPORTANTE! NÃO REMOVER
     int id;             ///< IMPORTANTE! NÃO REMOVER
     int sabor;          ///< IMPORTANTE! NÃO REMOVER
-
     /* você pode adicionar coisas aqui */
+
 } pedido_t;
 
 typedef struct pizza_s {

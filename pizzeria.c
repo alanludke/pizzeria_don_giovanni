@@ -14,6 +14,8 @@ pthread_mutex_t mutex_pa;
 
 queue_t queue_pedidos, queue_balcao;
 
+
+
 void *thread_pizzaiolo(void* arg) {
 	// retira da queue e cria pedido a partir deste
 	pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
@@ -50,6 +52,8 @@ void *thread_pizzaiolo(void* arg) {
 	// se possível coloca a pizza e pegador no balcao
 	queue_push_back(&queue_balcao, pizza);
 
+	garcom_entregar((pizza_t*)queue_wait(&queue_balcao));
+
 	// Desalocando pedido
 	free(pedido);
 
@@ -85,7 +89,7 @@ Clientes que ainda não se sentaram não conseguirão sentar pois pegar_mesas re
 Chamada pela função main() antes de chamar pizzeria_destroy() e terminar o programa.
 */
 void pizzeria_close() {
-
+	pizzeria_aberta = 0;
 }
 
 /*
@@ -121,7 +125,23 @@ A implementação não precisa considerar o layout das mesas.
 Chamada pelo cliente líder do grupo.
 */
 int pegar_mesas(int tam_grupo) {
-    return -1; //erro: não fui implementado (ainda)!
+	if(!pizzeria_aberta)
+		return -1;
+	int mesas_necessarias = floor(tam_grupo/4);;
+	if(tam_grupo % 4)
+		mesas_necessarias++;
+
+	int tamanhosem;
+
+	sem_getvalue(&sem_mesas, &tamanhosem);
+	if(mesas_necessarias >= tamanhosem)
+		return 0;
+
+	for (size_t i = 0; i < mesas_necessarias; i++) {
+		sem_wait(&sem_mesas);
+	}
+
+	return 0;
 }
 
 /*
@@ -130,7 +150,13 @@ Indica que o grupo vai embora.
 Chamada pelo cliente líder antes do grupo deixar a pizzaria.
 */
 void garcom_tchau(int tam_grupo) {
+	int mesas_necessarias = floor(tam_grupo/4);;
+	if(tam_grupo % 4)
+		mesas_necessarias++;
 
+	for (size_t i = 0; i < mesas_necessarias; i++) {
+		sem_post(&sem_mesas);
+	}
 }
 
 /*
@@ -139,9 +165,6 @@ Chamada pelo cliente líder.*
 */
 void garcom_chamar() {
 	sem_wait(&sem_garcons);
-
-	//todo
-	sem_post(&sem_garcons);
 }
 
 /*
@@ -156,5 +179,11 @@ Pega uma fatia da pizza. Retorna 0 (sem erro) se conseguiu pegar a fatia, ou -1 
 Chamada pelas threads representando clientes.
 */
 int pizza_pegar_fatia(pizza_t* pizza) {
-    return -1; // erro: não fui implementado (ainda)!
+	if(!pizza->fatias){
+		return -1;
+	}
+	pthread_mutex_lock(&pizza->mtx_pegador);
+	pizza->fatias--;
+	pthread_mutex_unlock(&pizza->mtx_pegador);
+  return 0;
 }
