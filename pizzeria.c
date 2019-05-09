@@ -32,6 +32,7 @@ void *thread_pizzaiolo(void* arg) {
 
 	// espera enquanto pizza não está assada
 	while(!pizza->assada);
+
 	// utiliza a pá
 	pthread_mutex_lock(&mutex_pa);
 
@@ -42,10 +43,6 @@ void *thread_pizzaiolo(void* arg) {
 
 	// desocupa forno
 	sem_post(&sem_forno);
-
-	// espera enquanto não há local vazio no balcao ***pode nao precisar pois ja se espera
-	//o balcao ser desocupado atraves de um semaforo dentro da funcao queue_push_back
-	//while (!queue_empty(&queue_balcao));	***
 
 	//seta mtx_pegador para destravado
 	pthread_mutex_init(&pizza->mtx_pegador, NULL);
@@ -96,7 +93,15 @@ Libera quaisquer recursos e estruturas de dados inicializados por pizzeria_init(
 Chamada pelafunção main() antes de sair.
 */
 void pizzeria_destroy() {
+	queue_destroy(&queue_pedidos);
+  queue_destroy(&queue_balcao);
+	sem_destroy(&sem_forno);
+	sem_destroy(&sem_pizzaiolos);
+	sem_destroy(&sem_mesas);
+	sem_destroy(&sem_garcons);
+	sem_destroy(&sem_tam_deck);
 
+	pthread_mutex_destroy(&mutex_pa);
 }
 
 /*
