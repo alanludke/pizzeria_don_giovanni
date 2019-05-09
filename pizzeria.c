@@ -18,14 +18,7 @@ queue_t queue_pedidos, queue_balcao;
 
 void *thread_pizzaiolo(void* arg) {
 
-	// retira da queue e cria pedido a partir deste
-	// if(!queue_empty(&queue_pedidos)){
-	// 	printf("Lista de pedidos vazia\n");
-	// 	//pthread_exit(NULL);
-	// 	return NULL;
-	// }
 	pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
-
 	pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
 
 	pizza->assada = 0;
@@ -91,15 +84,15 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 
 /*
 Impede que novos clientes sejam aceitos e bloqueia até que os clientes dentro da pizzeria saiam voluntariamente.
-Todo cliente que já estava sentado antes do fechamento, tem direito a receber
-    //loop para criar as threads de pizzaiolos
-    for (int i = 0; i < n_pizzaiolos; i++) {
-    } e comer pizzas pendentes e a fazer novos pedidos.
+Todo cliente que já estava sentado antes do fechamento, tem direito a receber e comer pizzas pendentes e a fazer novos pedidos.
 Clientes que ainda não se sentaram não conseguirão sentar pois pegar_mesas retornará -1.
 Chamada pela função main() antes de chamar pizzeria_destroy() e terminar o programa.
 */
 void pizzeria_close() {
 	pizzeria_aberta = 0;
+	int tamanhosem = 1;
+	while (tamanhosem > 0)
+		sem_getvalue(&sem_mesas, &tamanhosem);
 }
 
 /*
@@ -187,7 +180,10 @@ void fazer_pedido(pedido_t* pedido) {
 
 	queue_push_back(&queue_pedidos, pedido);
 	pthread_t thread;
+
 	sem_wait(&sem_pizzaiolos);
+	// printf("Pizzaiolo %d responsável pelo pedido %d", &thread, pedido->id);
+
 	pthread_create(&thread, NULL, thread_pizzaiolo, NULL);
 
 }
