@@ -33,7 +33,10 @@ int main(int argc, char** argv) {
         segs_execucao = atoi(argv[7]);
 
     helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos); // está contido em helper.c(não mexeremos)
-    pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos, threads);
+    pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
+
+    for (size_t i = 0; i < n_pizzaiolos; i++)
+  	  pthread_create(&threads[i], NULL, thread_pizzaiolo, NULL);
 
     pizzeria_open();
 
@@ -42,7 +45,20 @@ int main(int argc, char** argv) {
     printf("Passados %d segundos, fechando pizzaria\n", segs_execucao);
 
     pizzeria_close();
-    pizzeria_destroy(n_pizzaiolos, threads);
+
+    // if (mesas_ocupadas == 0){
+    //   continue;
+    // }
+    //
+
+
+    for (int i = 0; i < n_pizzaiolos; i++){
+      pthread_join(threads[i], NULL);
+      printf("Pizzaiolo vazando!%d", i);
+    }
+
+
+    pizzeria_destroy();
     helper_destroy();
 
     printf("Passados %d segundos, fechando pizzaria\n\n", segs_execucao);

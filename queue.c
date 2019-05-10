@@ -48,7 +48,7 @@ void* queue_wait(queue_t* q) {
     void* front = q->buf[q->begin];
 //    printf("buf[%d] -> %p  (%ld)\n", q->end, front, pthread_self());
     q->begin = (q->begin + 1) % q->capacity;
-    --q->size;    
+    --q->size;
     sem_post(&q->empty);
     pthread_mutex_unlock(&q->mtx);
 
@@ -60,4 +60,14 @@ int queue_empty(queue_t* q) {
     int empty = q->size == 0;
     pthread_mutex_unlock(&q->mtx);
     return empty;
+}
+
+void* queue_front(queue_t* q) {
+    assert(q->buf);
+    pthread_mutex_lock(&q->mtx);
+    void* front = q->buf[q->begin];
+//    printf("buf[%d] -> %p  (%ld)\n", q->end, front, pthread_self());
+    pthread_mutex_unlock(&q->mtx);
+
+    return front;
 }

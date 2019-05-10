@@ -4,6 +4,10 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+// extern int mesas_ocupadas = 0;
+// extern int pizzeria_aberta = 0;
+
+
 typedef struct cliente_s cliente_t;
 
 typedef struct pedido_s {
@@ -20,7 +24,7 @@ typedef struct pizza_s {
     pedido_t* pedido;   ///< IMPORTANTE! NÃO REMOVER
     struct timespec ts; ///< IMPORTANTE! NÃO REMOVER
     pthread_mutex_t mtx_pegador;
-    int assada;
+    sem_t sem_pizza_assada;
 
     /* você pode adicionar coisas aqui */
 
@@ -29,10 +33,10 @@ typedef struct pizza_s {
 void *thread_pizzaiolo(void* arg);
 
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
-                   int n_garcons, int tam_deck, int n_grupos, pthread_t *threads);
+                   int n_garcons, int tam_deck, int n_grupos);
 
 void pizzeria_close();
-void pizzeria_destroy(int n_pizzaiolos, pthread_t *threads);
+void pizzeria_destroy();
 
 void pizza_assada(pizza_t* pizza);
 int  pegar_mesas(int tam_grupo);
