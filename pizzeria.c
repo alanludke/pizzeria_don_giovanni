@@ -7,9 +7,10 @@
 #include <math.h>
 
 int pizzeria_aberta = 0;
+int mesas_ocupadas = 0;
 
 // Semaforos
-sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck;
+sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck, sem_pizzeria_aberta;
 
 // Mutexes
 pthread_mutex_t mutex_pa, mutex_ocupamesa;
@@ -17,44 +18,45 @@ pthread_mutex_t mutex_pa, mutex_ocupamesa;
 queue_t queue_pedidos, queue_balcao;
 
 void *thread_pizzaiolo(void* arg) {
+	while (!(!pizzeria_aberta && !mesas_ocupadas)) {
+		pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
+		pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
 
-	pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
-	pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
+		pizza->assada = 0;
+		// ocupa forno até pizza ser assada
+		sem_wait(&sem_forno);
+		// utiliza a pá
+		pthread_mutex_lock(&mutex_pa);
+		pizzaiolo_colocar_forno(pizza);
 
-	pizza->assada = 0;
-	// ocupa forno até pizza ser assada
-	sem_wait(&sem_forno);
-	// utiliza a pá
-	pthread_mutex_lock(&mutex_pa);
-	pizzaiolo_colocar_forno(pizza);
+		// desocupa a pá
+		pthread_mutex_unlock(&mutex_pa);
 
-	// desocupa a pá
-	pthread_mutex_unlock(&mutex_pa);
+		// espera enquanto pizza não está assada
+		while(!pizza->assada);
 
-	// espera enquanto pizza não está assada
-	while(!pizza->assada);
+		// utiliza a pá
+		pthread_mutex_lock(&mutex_pa);
 
-	// utiliza a pá
-	pthread_mutex_lock(&mutex_pa);
+		pizzaiolo_retirar_forno(pizza);
 
-	pizzaiolo_retirar_forno(pizza);
+		// desocupa a pá
+		pthread_mutex_unlock(&mutex_pa);
 
-	// desocupa a pá
-	pthread_mutex_unlock(&mutex_pa);
+		// desocupa forno
+		sem_post(&sem_forno);
 
-	// desocupa forno
-	sem_post(&sem_forno);
+		//seta mtx_pegador para destravado
+		pthread_mutex_init(&pizza->mtx_pegador, NULL);
 
-	//seta mtx_pegador para destravado
-	pthread_mutex_init(&pizza->mtx_pegador, NULL);
+		// se possível coloca a pizza e pegador no balcao
+		queue_push_back(&queue_balcao, pizza);
 
-	// se possível coloca a pizza e pegador no balcao
-	queue_push_back(&queue_balcao, pizza);
+		garcom_entregar((pizza_t*)queue_wait(&queue_balcao));
 
-	garcom_entregar((pizza_t*)queue_wait(&queue_balcao));
-
-	// Post para ter cozinheiro livre
-	sem_post(&sem_pizzaiolos);
+		// Post para ter cozinheiro livre
+		sem_post(&sem_pizzaiolos);
+	}
 
   pthread_exit(NULL);
 }
@@ -65,9 +67,13 @@ Inicializa quaisquer recursos e estruturas de dados que sejam necessários antes
 Chamada pela função main() antes de qualquer outra função.
 */
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
-                   int n_garcons, int tam_deck, int n_grupos) {
+                   int n_garcons, int tam_deck, int n_grupos, pthread_t* threads) {
+//s
 
-	pizzeria_aberta = 1;
+	for (size_t i = 0; i < n_pizzaiolos; i++) {
+	  pthread_create(&threads[i], NULL, thread_pizzaiolo, NULL);
+	}
+
 	queue_init(&queue_pedidos, tam_deck);
   queue_init(&queue_balcao, 1);
 	sem_init(&sem_forno, 0, tam_forno);
@@ -75,11 +81,12 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	sem_init(&sem_mesas, 0, n_mesas);
 	sem_init(&sem_garcons, 0, n_garcons);
 	sem_init(&sem_tam_deck, 0, tam_deck);
+	sem_init(&sem_pizzeria_aberta, 0, 1); //definir tamanho -------------------------------------------------
 
 	pthread_mutex_init(&mutex_pa, NULL);
 	pthread_mutex_init(&mutex_ocupamesa, NULL);
 
-
+	pizzeria_aberta = 1;
 }
 
 /*
@@ -90,16 +97,25 @@ Chamada pela função main() antes de chamar pizzeria_destroy() e terminar o pro
 */
 void pizzeria_close() {
 	pizzeria_aberta = 0;
-	int tamanhosem = 1;
-	while (tamanhosem > 0)
-		sem_getvalue(&sem_mesas, &tamanhosem);
+	// int tamanhosem = 1;
+	//
+	//
+	// //semaphore para 1 posicao
+	//
+	// while (tamanhosem > 0)
+	// 	sem_getvalue(&sem_mesas, &tamanhosem);
+
 }
 
 /*
 Libera quaisquer recursos e estruturas de dados inicializados por pizzeria_init().
 Chamada pelafunção main() antes de sair.
 */
-void pizzeria_destroy() {
+void pizzeria_destroy(int n_pizzaiolos, pthread_t *threads) {
+	for (size_t i = 0; i < n_pizzaiolos; i++) {
+	  pthread_join(threads[i], NULL);
+	}
+
 	queue_destroy(&queue_pedidos);
   queue_destroy(&queue_balcao);
 	sem_destroy(&sem_forno);
@@ -110,6 +126,7 @@ void pizzeria_destroy() {
 
 	pthread_mutex_destroy(&mutex_pa);
 	pthread_mutex_destroy(&mutex_ocupamesa);
+
 }
 
 /*
@@ -135,17 +152,21 @@ int pegar_mesas(int tam_grupo) {
 	if(tam_grupo % 4)
 		mesas_necessarias++;
 
-	int tamanhosem;
-	pthread_mutex_lock(&mutex_ocupamesa);
-	sem_getvalue(&sem_mesas, &tamanhosem);
-	if(mesas_necessarias >= tamanhosem)
-		return 0;
-
-	for (size_t i = 0; i < mesas_necessarias; i++) {
-		sem_wait(&sem_mesas);
+	while(1) {
+		int tamanhosem;
+		pthread_mutex_lock(&mutex_ocupamesa);
+		sem_getvalue(&sem_mesas, &tamanhosem);
+		if(mesas_necessarias >= tamanhosem){
+			pthread_mutex_unlock(&mutex_ocupamesa);
+		} else {
+			for (size_t i = 0; i < mesas_necessarias; i++) {
+				mesas_ocupadas++;
+				sem_wait(&sem_mesas);
+			}
+			pthread_mutex_unlock(&mutex_ocupamesa);
+			break;
+		}
 	}
-	pthread_mutex_unlock(&mutex_ocupamesa);
-
 	return 0;
 }
 
@@ -155,11 +176,13 @@ Indica que o grupo vai embora.
 Chamada pelo cliente líder antes do grupo deixar a pizzaria.
 */
 void garcom_tchau(int tam_grupo) {
+	sem_post(&sem_garcons);
 	int mesas_necessarias = floor(tam_grupo/4);;
 	if(tam_grupo % 4)
 		mesas_necessarias++;
 
 	for (size_t i = 0; i < mesas_necessarias; i++) {
+		mesas_ocupadas--;
 		sem_post(&sem_mesas);
 	}
 }
@@ -179,12 +202,9 @@ Chamado pelo cliente líder.
 void fazer_pedido(pedido_t* pedido) {
 
 	queue_push_back(&queue_pedidos, pedido);
-	pthread_t thread;
 
 	sem_wait(&sem_pizzaiolos);
 	// printf("Pizzaiolo %d responsável pelo pedido %d", &thread, pedido->id);
-
-	pthread_create(&thread, NULL, thread_pizzaiolo, NULL);
 
 }
 /*

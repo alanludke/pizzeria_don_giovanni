@@ -26,11 +26,16 @@ int main(int argc, char** argv) {
     n_garcons    = atoi(argv[4]);
     tam_deck     = atoi(argv[5]);
     n_grupos     = atoi(argv[6]);
+
+
+    pthread_t threads[n_pizzaiolos];
+
     if (argc > 7)
         segs_execucao = atoi(argv[7]);
 
     helper_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos); // está contido em helper.c(não mexeremos)
-    pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
+    pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos, threads);
+
     pizzeria_open();
 
     printf("Executando simulação por %d segundos\n", segs_execucao);
@@ -38,12 +43,10 @@ int main(int argc, char** argv) {
     printf("Passados %d segundos, fechando pizzaria\n", segs_execucao);
 
     pizzeria_close();
-    pizzeria_destroy();
+    pizzeria_destroy(n_pizzaiolos, threads);
     helper_destroy();
 
     printf("Passados %d segundos, fechando pizzaria\n\n", segs_execucao);
-
-    //printf("Relatório do dia:\nNúmero de pizzas queimadas: %d/%d\nClientes atendidos: %d\nassdadssdasdasda: %d\n", g_hlp_pizzas_queimadas, g_n_pizzas, -999, -999);
 
     return 0;
 }

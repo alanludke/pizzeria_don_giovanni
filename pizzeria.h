@@ -29,10 +29,10 @@ typedef struct pizza_s {
 void *thread_pizzaiolo(void* arg);
 
 void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
-                   int n_garcons, int tam_deck, int n_grupos);
+                   int n_garcons, int tam_deck, int n_grupos, pthread_t *threads);
 
 void pizzeria_close();
-void pizzeria_destroy();
+void pizzeria_destroy(int n_pizzaiolos, pthread_t *threads);
 
 void pizza_assada(pizza_t* pizza);
 int  pegar_mesas(int tam_grupo);
