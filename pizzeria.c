@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 
-int pizzeria_aberta = 0;
 int mesas_ocupadas = 0;
+int pizzeria_aberta = 0;
 
 // Semaforos
 sem_t sem_forno, sem_pizzaiolos, sem_mesas, sem_garcons, sem_tam_deck, sem_pizzeria_aberta;
@@ -148,7 +148,7 @@ Chamada pelo cliente líder do grupo.
 int pegar_mesas(int tam_grupo) {
 	if(!pizzeria_aberta)
 		return -1;
-	int mesas_necessarias = floor(tam_grupo/4);;
+	int mesas_necessarias = floor(tam_grupo/4);
 	if(tam_grupo % 4)
 		mesas_necessarias++;
 

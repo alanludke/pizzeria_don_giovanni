@@ -27,7 +27,6 @@ int main(int argc, char** argv) {
     tam_deck     = atoi(argv[5]);
     n_grupos     = atoi(argv[6]);
 
-
     pthread_t threads[n_pizzaiolos];
 
     if (argc > 7)
