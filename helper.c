@@ -203,7 +203,6 @@ void garcom_entregar(pizza_t* pizza) {
     pizza->pedido->cliente->pizza = pizza;
     sem_post(&pizza->pedido->cliente->goiaba);
     jabuti_sum(&g_hlp_garcons, -1);
-    printf("pizza entregue\n");
 }
 
 pizza_t* pizzaiolo_montar_pizza(pedido_t* pedido) {

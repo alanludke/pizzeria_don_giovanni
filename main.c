@@ -10,6 +10,11 @@
 #include "pizzeria.h"
 #include "helper.h"
 
+int ha_clientes = 1;
+int mesas_ocupadas = 0;
+int pizzeria_aberta = 0;
+
+
 int main(int argc, char** argv) {
     int tam_forno = 1, n_pizzaiolos = 1, n_mesas = 10, n_garcons = 1,
         tam_deck = 0, n_grupos = 0, segs_execucao = 10;
@@ -28,6 +33,7 @@ int main(int argc, char** argv) {
     n_grupos     = atoi(argv[6]);
 
     pthread_t threads[n_pizzaiolos];
+    int tchau_pizzaiolos = 0;
 
     if (argc > 7)
         segs_execucao = atoi(argv[7]);
@@ -36,7 +42,7 @@ int main(int argc, char** argv) {
     pizzeria_init(tam_forno, n_pizzaiolos, n_mesas, n_garcons, tam_deck, n_grupos);
 
     for (size_t i = 0; i < n_pizzaiolos; i++)
-  	  pthread_create(&threads[i], NULL, thread_pizzaiolo, NULL);
+  	  pthread_create(&threads[i], NULL, thread_pizzaiolo, &tchau_pizzaiolos);
 
     pizzeria_open();
 
@@ -46,22 +52,10 @@ int main(int argc, char** argv) {
 
     pizzeria_close();
 
-    // if (mesas_ocupadas == 0){
-    //   continue;
-    // }
-    //
-
-
-    for (int i = 0; i < n_pizzaiolos; i++){
-      pthread_join(threads[i], NULL);
-      printf("Pizzaiolo vazando!%d", i);
-    }
-
+    while (ha_clientes); // enquanto ha_clientes não é alterado(quando o ultimo sai)
 
     pizzeria_destroy();
     helper_destroy();
-
-    printf("Passados %d segundos, fechando pizzaria\n\n", segs_execucao);
 
     return 0;
 }

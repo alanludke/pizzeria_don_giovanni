@@ -4,9 +4,6 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-// extern int mesas_ocupadas = 0;
-// extern int pizzeria_aberta = 0;
-
 
 typedef struct cliente_s cliente_t;
 
