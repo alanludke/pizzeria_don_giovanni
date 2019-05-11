@@ -10,7 +10,7 @@
 #include "pizzeria.h"
 #include "helper.h"
 
-int ha_clientes = 1;
+// int sem_ha_clientes = 1;
 int mesas_ocupadas = 0;
 int pizzeria_aberta = 0;
 
@@ -45,6 +45,7 @@ int main(int argc, char** argv) {
   	  pthread_create(&threads[i], NULL, thread_pizzaiolo, &tchau_pizzaiolos);
 
     pizzeria_open();
+    sem_wait(&sem_ha_clientes);
 
     printf("Executando simulação por %d segundos\n", segs_execucao);
     sleep(segs_execucao);
@@ -52,10 +53,14 @@ int main(int argc, char** argv) {
 
     pizzeria_close();
 
-    while (ha_clientes); // enquanto ha_clientes não é alterado(quando o ultimo sai)
+    // while (sem_ha_clientes); // enquanto sem_ha_clientes não é alterado(quando o ultimo sai)
+    sem_wait(&sem_ha_clientes);
 
     pizzeria_destroy();
     helper_destroy();
+
+    for (size_t i = 0; i < n_pizzaiolos; i++)
+  	  pthread_join(threads[i], NULL);
 
     return 0;
 }

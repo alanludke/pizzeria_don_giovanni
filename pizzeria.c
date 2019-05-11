@@ -8,10 +8,11 @@
 
 extern int mesas_ocupadas;
 extern int pizzeria_aberta;
-extern int ha_clientes;
+// extern int sem_ha_clientes;
 
 // Semaforos
 sem_t sem_forno, sem_mesas, sem_garcons, sem_tam_deck;
+// extern sem_t sem_ha_clientes;
 
 // Mutexes
 pthread_mutex_t mutex_pa, mutex_ocupa_mesa;
@@ -74,6 +75,7 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	sem_init(&sem_mesas, 0, n_mesas);
 	sem_init(&sem_garcons, 0, n_garcons);
 	sem_init(&sem_tam_deck, 0, tam_deck);
+	sem_init(&sem_ha_clientes, 0, 1);
 
 	pthread_mutex_init(&mutex_pa, NULL);
 	pthread_mutex_init(&mutex_ocupa_mesa, NULL);
@@ -168,7 +170,8 @@ void garcom_tchau(int tam_grupo) {
 
 	if (!pizzeria_aberta && !mesas_ocupadas) {
 		// printf("sou o ultimo!!\n");
-		ha_clientes = 0;
+		// sem_ha_clientes = 0;
+		sem_post(&sem_ha_clientes);
 	}
 }
 

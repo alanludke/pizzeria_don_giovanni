@@ -4,6 +4,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+extern sem_t sem_ha_clientes;
 
 typedef struct cliente_s cliente_t;
 
