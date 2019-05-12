@@ -8,21 +8,21 @@
 
 extern int mesas_ocupadas;
 extern int pizzeria_aberta;
-// extern int sem_ha_clientes;
 
 // Semaforos
 sem_t sem_forno, sem_mesas, sem_garcons, sem_tam_deck;
-// extern sem_t sem_ha_clientes;
 
 // Mutexes
 pthread_mutex_t mutex_pa, mutex_ocupa_mesa;
 
+// Queue
 queue_t queue_pedidos, queue_balcao;
 
 void *thread_pizzaiolo(void* arg) {
 	while (!(!pizzeria_aberta && !mesas_ocupadas)) {
 		pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
 		pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
+
 		//seta mtx_pegador para destravado
 		pthread_mutex_init(&pizza->mtx_pegador, NULL);
 
@@ -61,7 +61,6 @@ void *thread_pizzaiolo(void* arg) {
   pthread_exit(0);
 }
 
-
 /*
 Inicializa quaisquer recursos e estruturas de dados que sejam necessários antes da pizzeria poder receber clientes.
 Chamada pela função main() antes de qualquer outra função.
@@ -75,7 +74,7 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 	sem_init(&sem_mesas, 0, n_mesas);
 	sem_init(&sem_garcons, 0, n_garcons);
 	sem_init(&sem_tam_deck, 0, tam_deck);
-	sem_init(&sem_ha_clientes, 0, 1);
+	sem_init(&sem_ha_clientes, 0, 0);
 
 	pthread_mutex_init(&mutex_pa, NULL);
 	pthread_mutex_init(&mutex_ocupa_mesa, NULL);
@@ -104,6 +103,7 @@ void pizzeria_destroy() {
 	sem_destroy(&sem_mesas);
 	sem_destroy(&sem_garcons);
 	sem_destroy(&sem_tam_deck);
+	sem_destroy(&sem_ha_clientes);
 
 	pthread_mutex_destroy(&mutex_pa);
 	pthread_mutex_destroy(&mutex_ocupa_mesa);
@@ -169,8 +169,6 @@ void garcom_tchau(int tam_grupo) {
 	pthread_mutex_unlock(&mutex_ocupa_mesa);
 
 	if (!pizzeria_aberta && !mesas_ocupadas) {
-		// printf("sou o ultimo!!\n");
-		// sem_ha_clientes = 0;
 		sem_post(&sem_ha_clientes);
 	}
 }
@@ -190,6 +188,7 @@ Chamado pelo cliente líder.
 void fazer_pedido(pedido_t* pedido) {
 	queue_push_back(&queue_pedidos, pedido);
 }
+
 /*
 Pega uma fatia da pizza. Retorna 0 (sem erro) se conseguiu pegar a fatia, ou -1 (erro) se a pizza já acabou.
 Chamada pelas threads representando clientes.
