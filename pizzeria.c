@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 
-extern int mesas_ocupadas;
-extern int pizzeria_aberta;
+int mesas_ocupadas;
+int pizzeria_aberta;
 int sacrificar_pizzaiolos = 0;
 
 // Semaforos
@@ -20,10 +20,7 @@ pthread_mutex_t mutex_pa, mutex_ocupa_mesa;
 queue_t queue_pedidos, queue_balcao;
 
 void *thread_pizzaiolo(void* arg) {
-	printf("pizzaiolos comecaram!\n");
 	while (!sacrificar_pizzaiolos) {
-		printf("second loop\n");
-
 		pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
 		pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
 
@@ -49,12 +46,11 @@ void *thread_pizzaiolo(void* arg) {
 		pthread_mutex_lock(&mutex_pa);
 
 		pizzaiolo_retirar_forno(pizza);
+		// desocupa forno
+		sem_post(&sem_forno);
 
 		// desocupa a pá
 		pthread_mutex_unlock(&mutex_pa);
-
-		// desocupa forno
-		sem_post(&sem_forno);
 
 		// se possível coloca a pizza e pegador no balcao
 		queue_push_back(&queue_balcao, pizza);
@@ -63,7 +59,6 @@ void *thread_pizzaiolo(void* arg) {
 		garcom_entregar((pizza_t*)queue_wait(&queue_balcao));
 		sem_post(&sem_garcons);
 	}
-	printf("finalizar thread!\n");
 	pthread_exit(NULL);
 }
 
@@ -176,7 +171,6 @@ void garcom_tchau(int tam_grupo) {
 
 
 	if (!pizzeria_aberta && !mesas_ocupadas) {
-		printf("matar todos!");
 		sem_post(&sem_ha_clientes);
 		sacrificar_pizzaiolos = 1;
 	}
