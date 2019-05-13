@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
     sem_wait(&sem_ha_clientes);
 
     pizzeria_destroy();
+
     helper_destroy();
 
     for (size_t i = 0; i < n_pizzaiolos; i++)

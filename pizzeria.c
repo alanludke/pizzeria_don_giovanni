@@ -8,6 +8,7 @@
 
 extern int mesas_ocupadas;
 extern int pizzeria_aberta;
+int sacrificar_pizzaiolos = 0;
 
 // Semaforos
 sem_t sem_forno, sem_mesas, sem_garcons, sem_tam_deck;
@@ -19,7 +20,10 @@ pthread_mutex_t mutex_pa, mutex_ocupa_mesa;
 queue_t queue_pedidos, queue_balcao;
 
 void *thread_pizzaiolo(void* arg) {
-	while (!(!pizzeria_aberta && !mesas_ocupadas)) {
+	printf("pizzaiolos comecaram!\n");
+	while (!sacrificar_pizzaiolos) {
+		printf("second loop\n");
+
 		pedido_t* pedido = (pedido_t*) queue_wait(&queue_pedidos);
 		pizza_t* pizza = pizzaiolo_montar_pizza(pedido);
 
@@ -55,10 +59,12 @@ void *thread_pizzaiolo(void* arg) {
 		// se possível coloca a pizza e pegador no balcao
 		queue_push_back(&queue_balcao, pizza);
 
+		sem_wait(&sem_garcons);
 		garcom_entregar((pizza_t*)queue_wait(&queue_balcao));
-
+		sem_post(&sem_garcons);
 	}
-  pthread_exit(0);
+	printf("finalizar thread!\n");
+	pthread_exit(NULL);
 }
 
 /*
@@ -78,7 +84,6 @@ void pizzeria_init(int tam_forno, int n_pizzaiolos, int n_mesas,
 
 	pthread_mutex_init(&mutex_pa, NULL);
 	pthread_mutex_init(&mutex_ocupa_mesa, NULL);
-
 	pizzeria_aberta = 1;
 }
 
@@ -157,6 +162,7 @@ Chamada pelo cliente líder antes do grupo deixar a pizzaria.
 */
 void garcom_tchau(int tam_grupo) {
 	sem_post(&sem_garcons);
+
 	int mesas_necessarias = floor(tam_grupo/4);;
 	if(tam_grupo % 4)
 		mesas_necessarias++;
@@ -168,8 +174,11 @@ void garcom_tchau(int tam_grupo) {
 	}
 	pthread_mutex_unlock(&mutex_ocupa_mesa);
 
+
 	if (!pizzeria_aberta && !mesas_ocupadas) {
+		printf("matar todos!");
 		sem_post(&sem_ha_clientes);
+		sacrificar_pizzaiolos = 1;
 	}
 }
 
