@@ -10,6 +10,8 @@ int mesas_ocupadas;
 int pizzeria_aberta;
 int sacrificar_pizzaiolos = 0;
 
+extern sem_t sem_ha_clientes;
+
 // Semaforos
 sem_t sem_forno, sem_mesas, sem_garcons, sem_tam_deck;
 
