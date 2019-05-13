@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
   pizzeria_close();
 
   sem_wait(&sem_ha_clientes);
+
   pizzeria_destroy();
   helper_destroy();
 
